@@ -1,0 +1,22 @@
+# Run this as Administrator in PowerShell
+
+$targetDrive = "C:\"
+
+$folders = Get-ChildItem -Path $targetDrive -Directory -Force -ErrorAction SilentlyContinue
+
+$results = @()
+
+foreach ($folder in $folders) {
+    try {
+        $size = (Get-ChildItem $folder.FullName -Recurse -Force -ErrorAction SilentlyContinue |
+                 Measure-Object -Property Length -Sum).Sum
+        $results += [PSCustomObject]@{
+            Folder = $folder.FullName
+            SizeGB = [math]::Round($size / 1GB, 2)
+        }
+    } catch {
+        Write-Host "Skipping: $($folder.FullName)"
+    }
+}
+
+$results | Sort-Object SizeGB -Descending | Select-Object -First 20 | Format-Table -AutoSize
